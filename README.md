@@ -1,111 +1,79 @@
 # Veyra
 
-**Reserve funded collateral buyers before issuing loans.**
+Reserve funded collateral buyers **before** a participating lending market issues loans.
 
-Veyra is a proposed liquidation liquidity marketplace on HyperEVM. It connects lending markets with buyers who commit stablecoins to purchase collateral under agreed conditions. Participating lenders can reserve that capacity before extending credit, with shared accounting designed to prevent the same funds from backing multiple commitments.
+The first Solidity implementation is here: buyer custody, immutable offers, exclusive reservations, oracle pricing, atomic settlement, a reference lending market and adapter, and Foundry tests. Target: **Hyperliquid's HyperEVM**. No live deployment or existing lending-protocol integration is claimed.
 
-> **Status: design stage.** This repository currently contains project documentation. Smart contracts, lending integrations, a frontend, and deployments have not been implemented.
+**Current phase: smart contracts only.** The later frontend will use **TypeScript + Next.js**. There is no placeholder frontend or SDK. Tooling uses Node.js and Foundry; no Python is required.
 
-## Why Veyra
+## Run
 
-A collateral valuation describes what an asset is worth according to a pricing mechanism. It does not establish that a buyer will purchase a specific quantity when a loan needs liquidation.
+Prerequisites: Node.js 22.19+, pnpm 10.15.1, Foundry 1.7.1. The compiler installer supports macOS (Rosetta for Apple Silicon) and Linux x86_64.
 
-Veyra aims to make that buying capacity explicit: funded, allocated to a lending obligation, and governed by purchase terms agreed in advance. Lenders gain visibility into reserved capacity, while buyers receive reservation fees in exchange for committing capital and accepting collateral purchase risk.
-
-## How it works
-
-1. **Fund an offer.** A buyer deposits supported stablecoins and defines acceptable collateral, purchase pricing, maximum spend, reservation duration, and fees.
-2. **Reserve capacity.** An integrated lending market allocates available funds to a specific loan or bounded set of obligations before issuing credit.
-3. **Maintain the commitment.** Reserved funds remain unavailable for withdrawal or allocation elsewhere while the commitment is active.
-4. **Execute an eligible purchase.** When the lending market's liquidation rules and the reservation's purchase conditions are satisfied, an execution transaction exchanges committed funds for the specified collateral through the market integration.
-5. **Release or renew.** Repayment or another permitted release condition frees the allocation. Reservations approaching expiry require explicit renewal or replacement handling.
-
-The lender supplies the borrower's loan. The buyer's reserved funds finance a potential collateral purchase; they are separate from the loan principal.
-
-### Example
-
-A buyer deposits **100,000 USDC**. Market A reserves **70,000 USDC**, leaving **30,000 USDC** available for Market B. An attempt by Market B to reserve **40,000 USDC** must fail.
-
-If a qualifying liquidation in Market A requires a **20,000 USDC** purchase, settlement transfers that amount in exchange for the agreed collateral. The remaining allocation is updated according to the reservation terms.
-
-These amounts illustrate reservation accounting, not recommended lending parameters or promised returns.
-
-## Participants
-
-| Participant | Role |
-| --- | --- |
-| Borrower | Deposits collateral and borrows from a participating lending market. |
-| Lending market | Issues loans, defines liquidation eligibility, and integrates reservation and settlement checks. |
-| Collateral buyer | Commits purchase capital, receives agreed fees, and takes ownership of purchased collateral. |
-| Transaction executor | Submits eligible settlement transactions; contracts must verify the conditions independently. |
-
-## Planned architecture
-
-| Component | Responsibility |
-| --- | --- |
-| Funding vault | Custody supported buyer assets and account for available and reserved balances. |
-| Reservation registry | Record commitments, allocate capacity, and enforce lifecycle transitions. |
-| Lending adapter | Connect a market's loan creation, repayment, and liquidation logic to reservations. |
-| Settlement contracts | Validate purchase conditions and coordinate payment and collateral delivery. |
-| Web application | Let buyers publish offers and lenders inspect capacity, terms, fees, and reservations. |
-
-### HyperEVM deployment
-
-The planned contracts will run on **HyperEVM**, Hyperliquid's EVM execution environment. The initial scope is a lending market and funded purchase settlement on HyperEVM.
-
-HyperCore market data and trading may support later extensions. Those integrations require separate validation of asset support, execution timing, and failure handling. The base design does not require a HyperCore trade to fill in order to honor a funded purchase commitment.
-
-Veyra does not currently integrate with Hyperliquid's native perpetual liquidation system or any existing lending protocol.
-
-## Core design requirements
-
-- **Funded commitments:** Active allocations must never exceed assets held for those commitments, accounted for separately by funding asset.
-- **Exclusive allocation:** A unit of reserved capital cannot support another active reservation within Veyra.
-- **Binding terms:** Collateral, pricing rules, maximum spend, expiry, and fees must be explicit and protected against unilateral changes during an active commitment.
-- **Verified eligibility:** A price movement alone must not authorize a purchase. Settlement must satisfy the integrated lending market's liquidation rules and the reservation terms.
-- **Single settlement:** Repeated calls must not pay twice for the same purchase or reuse already consumed capacity.
-- **Payment against delivery:** Settlement must enforce delivery of the agreed collateral in exchange for payment. The initial same-chain design should make both transfers atomic.
-- **Controlled release:** Repayment, partial settlement, cancellation, and expiry must have explicit rules for releasing funds.
-- **Safe expiry handling:** Reservation expiry must not itself liquidate a healthy loan. The lending integration must define how continuing loans are handled when coverage ends.
-
-These are implementation and verification targets, not guarantees provided by the current repository. Double-booking prevention applies to funds held and accounted for by Veyra; it does not establish exclusivity over unrelated external assets.
-
-## Economics and risk
-
-Buyers would earn negotiated reservation fees for tying up capital and accepting a conditional obligation to buy collateral. The fee payer and payment schedule must be agreed by each participating market. A potential protocol revenue model is a disclosed share of those fees.
-
-The central economic question is whether fees can attract buyers at a cost lenders are willing to pay. Purchased collateral may fall further in value, and resale liquidity may be limited. Reserved buying capacity does not guarantee full debt recovery or eliminate bad debt.
-
-Pricing integrity, supported token behavior, contract correctness, transaction execution, and reservation expiry are all material design concerns. Reserved capital must remain available for its commitment rather than being silently reused for lending, trading, or other strategies.
-
-## Development roadmap
-
-- [ ] Validate purchase terms and fee expectations with a lending team and prospective buyers.
-- [ ] Specify reservation states, pricing rules, expiry policy, and accounting invariants.
-- [ ] Implement funding, reservation, and settlement contracts.
-- [ ] Build a reference lending market and adapter for the complete loan lifecycle.
-- [ ] Test overbooking, partial purchases, duplicate execution, repayment, expiry, and invalid liquidation attempts.
-- [ ] Deliver a HyperEVM testnet demo with a buyer and lender interface.
-- [ ] Pilot an integration with a lending protocol and evaluate the economics.
-- [ ] Complete independent security review before accepting production funds.
-
-## Repository and development
-
-```text
-.
-├── README.md
-└── .gitignore
+```sh
+pnpm run setup                 # locked dependencies + checksum-verified local Solidity compiler
+pnpm check                 # format, build with sizes, unit/fuzz/invariant tests
+pnpm demo                  # local end-to-end simulation, no broadcast
+pnpm --filter @veyra/contracts deploy:dry
 ```
 
-There is no runnable application, dependency installation, test suite, or deployment address yet. Setup commands will be added with the first implementation.
+Solidity 0.8.30, Cancun, optimizer 200. OpenZeppelin Contracts 5.4.0 and forge-std 1.9.7 (commit pinned) are locked. Compiler and package cache stay in ignored `.tooling/`.
 
-Design feedback and integration proposals are welcome through [GitHub issues](https://github.com/dvansari65/veyra/issues). Useful proposals identify the lending market, collateral and funding assets, required purchase terms, and integration constraints.
+## How funds move
 
-## References
+1. A **lender** separately funds the lending market.
+2. A **buyer** deposits stablecoins in Veyra and publishes an offer authorizing a specific adapter.
+3. A **borrower** posts collateral and authorizes an upfront fee with a maximum limit. The market reserves the loan's maximum contractual debt before disbursing lender principal. Failure rolls everything back.
+4. An executor can settle an eligible loan. Veyra pays with reserved buyer capital; the market delivers collateral to the buyer and returns surplus collateral to the borrower in the same transaction.
+5. Repayment releases the reservation. Expiry unlocks buyer funds but does not itself close or liquidate the loan.
 
-- [HyperEVM developer documentation](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/hyperevm)
-- [Interacting with HyperCore](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/hyperevm/interacting-with-hypercore)
+Buyer capital is **not** the original loan principal. A reservation supplies buying liquidity; collateral losses can still cause lender bad debt.
+
+## Contracts
+
+| Contract | Responsibility |
+| --- | --- |
+| `BuyerVault` | Internal custody/accounting base: available versus reserved balances; available-only withdrawals |
+| `ReservationManager` | Deployable core: offers, reservations, fee collection, expiry, repayment release and settlement under one reentrancy guard |
+| `PriceOracle` | Immutable asset pair, two USD feeds, decimals, rounding and feed validity checks |
+| `ReferenceLendingAdapter` | Immutable, authenticated bridge to one reference market |
+| `DemoLendingMarket` | Lender liquidity, fixed-term debt, borrower collateral, repayments and explicit shortfalls |
+| `src/mocks/*` | Clearly test-only, freely mintable tokens and mutable feeds |
+
+No upgrade proxy, admin drain, mutable active terms, yield strategy or protocol fee recipient. Upfront fees go directly to the buyer and are tracked separately from capital. The core consolidates the planned SettlementEngine to avoid cross-module accounting and locking complexity.
+
+## Demo
+
+`pnpm demo` verifies these steps with assertions:
+
+- Buyer funds 100,000 test USDC; lender independently funds two markets.
+- Market A reserves 69,999.30; Market B's attempt to reserve another 39,999.75 reverts atomically.
+- First loan is repaid; capacity is released and collateral returned.
+- A second loan liquidates after a mock price decline. Buyer pays 3,800 test USDC for 100 test wrapped HYPE; market records a 1,200 shortfall.
+
+The mock tokens are **not real USDC or wrapped HYPE**, and the mutable feeds are unsuitable for real funds.
+
+## Layout and documentation
+
+```text
+packages/contracts/    Solidity sources, Foundry tests and scripts
+scripts/               Node.js compiler setup
+.github/workflows/     Contract verification CI
+docs/                 Contract specification and development notes
+```
+
+- [Contract specification and trust boundaries](docs/CONTRACTS.md)
+- [Development, verification and test deployment](docs/DEVELOPMENT.md)
+- [Follow-up contract review and reproduced findings](docs/REVIEW.md)
+
+## Scope and limitations
+
+V1 supports one asset pair per core, one buyer reservation per loan, fixed-duration capped-interest loans, full repayment and terminal liquidation. Partial liquidation, top-ups, renewal/replacement, LP share accounting, frontend and SDK are deferred.
+
+Adapters are explicitly trusted by buyers. The core cannot make a dishonest integration's reported debt truthful. Real integrations need protocol-specific validation, real token/feed address verification and independent security review. No integration with Hyperliquid's native perpetual liquidation system is claimed.
+
+**Unaudited. Passing tests are not a security guarantee. No production deployment or real funds.**
 
 ## License
 
-No license has been selected yet. This repository does not currently grant an open-source license.
+No license has been selected. Project sources use `SPDX-License-Identifier: UNLICENSED`; this does not grant an open-source license. Dependencies retain their own licenses.

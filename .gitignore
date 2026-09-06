@@ -23,3 +23,6 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
+
+# Project-local tooling
+.tooling/

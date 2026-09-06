@@ -4,7 +4,7 @@ Reserve funded collateral buyers **before** a participating lending market issue
 
 The first Solidity implementation is here: buyer custody, immutable offers, exclusive reservations, oracle pricing, atomic settlement, a reference lending market and adapter, and Foundry tests. Target: **Hyperliquid's HyperEVM**. No live deployment or existing lending-protocol integration is claimed.
 
-**Current phase: smart contracts only.** The later frontend will use **TypeScript + Next.js**. There is no placeholder frontend or SDK. Tooling uses Node.js and Foundry; no Python is required.
+**Current phase: smart contracts and landing page.** The landing page uses **TypeScript + Next.js**, self-hosted fonts, and GSAP. Contract interaction, wallet connection, and an SDK are deferred. Tooling uses Node.js and Foundry; no Python is required.
 
 ## Run
 
@@ -14,6 +14,8 @@ Prerequisites: Node.js 22.19+, pnpm 10.15.1, Foundry 1.7.1. The compiler install
 pnpm run setup                 # locked dependencies + checksum-verified local Solidity compiler
 pnpm check                 # format, build with sizes, unit/fuzz/invariant tests
 pnpm demo                  # local end-to-end simulation, no broadcast
+pnpm dev                   # landing page on http://127.0.0.1:3000
+pnpm check:web             # landing page types, formatting, and static export
 pnpm --filter @veyra/contracts deploy:dry
 ```
 
@@ -56,9 +58,10 @@ The mock tokens are **not real USDC or wrapped HYPE**, and the mutable feeds are
 ## Layout and documentation
 
 ```text
+apps/web/              Next.js landing page (see apps/web/README.md)
 packages/contracts/    Solidity sources, Foundry tests and scripts
 scripts/               Node.js compiler setup
-.github/workflows/     Contract verification CI
+.github/workflows/     Contract and landing page verification CI
 docs/                 Contract specification and development notes
 ```
 
@@ -68,7 +71,7 @@ docs/                 Contract specification and development notes
 
 ## Scope and limitations
 
-V1 supports one asset pair per core, one buyer reservation per loan, fixed-duration capped-interest loans, full repayment and terminal liquidation. Partial liquidation, top-ups, renewal/replacement, LP share accounting, frontend and SDK are deferred.
+V1 supports one asset pair per core, one buyer reservation per loan, fixed-duration capped-interest loans, full repayment and terminal liquidation. Partial liquidation, top-ups, renewal/replacement, LP share accounting, the transaction interface and SDK are deferred.
 
 Adapters are explicitly trusted by buyers. The core cannot make a dishonest integration's reported debt truthful. Real integrations need protocol-specific validation, real token/feed address verification and independent security review. No integration with Hyperliquid's native perpetual liquidation system is claimed.
 

@@ -15,6 +15,9 @@
     "format:check": "pnpm --filter @veyra/contracts format:check",
     "check": "pnpm format:check && pnpm build && pnpm test",
     "setup": "pnpm install --frozen-lockfile --store-dir .tooling/pnpm-store && node scripts/setup-solc.mjs",
-    "demo": "pnpm --filter @veyra/contracts demo"
+    "demo": "pnpm --filter @veyra/contracts demo",
+    "dev": "pnpm --filter @veyra/web dev",
+    "build:web": "pnpm --filter @veyra/web build",
+    "check:web": "pnpm --filter @veyra/web typecheck && pnpm --filter @veyra/web format:check && pnpm build:web"
   }
 }

@@ -1,0 +1,18 @@
+{
+  "name": "@veyra/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "forge build --sizes",
+    "test": "forge test",
+    "test:invariant": "forge test --match-path 'test/invariant/*'",
+    "format": "forge fmt",
+    "format:check": "forge fmt --check",
+    "demo": "forge script script/Demo.s.sol:Demo -vvv",
+    "deploy:dry": "forge script script/Deploy.s.sol:Deploy -vvv"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "5.4.0",
+    "forge-std": "https://github.com/foundry-rs/forge-std/archive/77041d2ce690e692d6e03cc812b57d1ddaa4d505.tar.gz"
+  }
+}

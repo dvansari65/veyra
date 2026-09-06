@@ -1,0 +1,20 @@
+{
+  "name": "veyra",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "pnpm --filter @veyra/contracts build",
+    "test": "pnpm --filter @veyra/contracts test",
+    "test:invariant": "pnpm --filter @veyra/contracts test:invariant",
+    "format": "pnpm --filter @veyra/contracts format",
+    "format:check": "pnpm --filter @veyra/contracts format:check",
+    "check": "pnpm format:check && pnpm build && pnpm test",
+    "setup": "pnpm install --frozen-lockfile --store-dir .tooling/pnpm-store && node scripts/setup-solc.mjs",
+    "demo": "pnpm --filter @veyra/contracts demo"
+  }
+}
